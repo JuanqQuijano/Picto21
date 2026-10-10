@@ -156,6 +156,7 @@ function palabraQueHabriaSalvado(carta, dicha, sumaAntes, mejora, sirve) {
 // ------------------------------------------------------------------ reglas
 
 function nuevaRonda() {
+  $("fin-overlay").classList.add("hidden");
   const esc = ESC[$("sel-escenario").value];
   const mazo = barajar(Array(esc.copias).fill(esc.mazo).flat());
   const visible = mazo.shift();
@@ -266,6 +267,20 @@ function terminar(res, alt) {
     voz = `${voz} ${nota}`;
   }
   mensaje(texto, res === "gana" ? "bien" : "mal");
+
+  const overlay = $("fin-overlay");
+  const titulo = $("fin-titulo");
+  const detalle = $("fin-mensaje");
+  const mensajes = {
+    gana: ["¡Lo hiciste genial!", "¡Qué bien jugaste! Sigue así, eres muy listo/a."],
+    empate: ["¡Empataste!", "No pasa nada, ¡otra vuelta y lo intentamos de nuevo!"],
+    pierde: ["¡Otra vez será!", "No te preocupes, ¡la próxima partida puede salir mejor!"],
+    se_paso: ["¡Casi lo logras!", "Te pasaste un poquito, pero aún puedes volver a jugar y probar otra vez."],
+  };
+  titulo.textContent = mensajes[res][0];
+  detalle.textContent = alt ? `Pudiste decir ${alt.palabra.toUpperCase()} y quedarse en ${alt.suma}.` : mensajes[res][1];
+  overlay.classList.remove("hidden");
+
   setTimeout(() => decir(voz), 400);
 }
 
@@ -348,7 +363,10 @@ function renderRespuesta(activo) {
     const puedeCrecer = (t) => validas.some((p) => p !== t && p.startsWith(t));
     const ok = document.createElement("button");
     ok.className = "btn-control ok";
-    ok.textContent = "✔";
+    const okIcon = document.createElement("img");
+    okIcon.src = "./assets/keyboard/keyboard_enter.svg";
+    okIcon.alt = "Aceptar";
+    ok.appendChild(okIcon);
     ok.disabled = true;
     const refrescar = () => {
       armada.textContent = texto;
@@ -359,7 +377,10 @@ function renderRespuesta(activo) {
     const fichas = letrasElegibles(S.carta).map((l) => {
       const b = document.createElement("button");
       b.className = "ficha";
-      b.textContent = l;
+      const icon = document.createElement("img");
+      icon.src = `./assets/keyboard/keyboard_${l.toLowerCase()}.svg`;
+      icon.alt = l;
+      b.appendChild(icon);
       b.onclick = () => {
         texto += l; b.classList.add("usada"); decir(l); refrescar();
       };
@@ -367,7 +388,10 @@ function renderRespuesta(activo) {
     });
     const borrar = document.createElement("button");
     borrar.className = "btn-control borrar";
-    borrar.textContent = "⌫";
+    const borrarIcon = document.createElement("img");
+    borrarIcon.src = "./assets/keyboard/keyboard_backspace_icon.svg";
+    borrarIcon.alt = "Borrar";
+    borrar.appendChild(borrarIcon);
     borrar.onclick = () => {
       texto = "";
       fichas.forEach((f) => f.classList.remove("usada"));
@@ -400,6 +424,7 @@ function init() {
   $("sel-nivel").value = ESC[sel.value].nivel_inicial;
   $("sel-nivel").onchange = () => { S.nivel = Number($("sel-nivel").value); render(); };
   $("btn-nueva").onclick = nuevaRonda;
+  $("btn-volver-jugar").onclick = nuevaRonda;
   $("btn-pedir").onclick = () => { if (S.fase === "decidir" && S.mazo.length) sacarCarta(); };
   $("btn-parar").onclick = () => { if (S.fase === "decidir") { mensaje("", ""); jugarCrupier(); render(); } };
   $("btn-mejora").onclick = () => {

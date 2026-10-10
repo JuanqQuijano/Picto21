@@ -4,6 +4,9 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Picto21 - Experimento B</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -70,6 +73,17 @@
     </section>
     <div id="consejo" class="consejo" aria-live="polite"></div>
   </main>
+
+  <div id="fin-overlay" class="fin-overlay hidden" aria-live="polite">
+    <div class="fin-card">
+      <div class="fin-escena" aria-hidden="true"></div>
+      <div class="fin-contenido">
+        <h2 id="fin-titulo">¡Lo hiciste genial!</h2>
+        <p id="fin-mensaje">La próxima ronda será todavía mejor.</p>
+        <button id="btn-volver-jugar" class="btn-volver">Volver a jugar</button>
+      </div>
+    </div>
+  </div>
 
   <footer>
     Pictogramas: Sergio Palao. Origen: <a href="https://arasaac.org">ARASAAC</a>.
