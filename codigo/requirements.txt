@@ -1,0 +1,6 @@
+# Hito 1: los experimentos solo usan la biblioteca estandar de Python 3.9+.
+# Dependencias previstas para Hito 2 / Hito 3 (descomentar al integrarlas):
+# fastapi
+# uvicorn
+# numpy
+# gymnasium

@@ -1,0 +1,60 @@
+{
+  "mejoras": {
+    "mas_uno":   {"texto": "+1",     "descripcion": "La proxima carta vale 1 punto mas.",                 "emoji": "➕"},
+    "menos_uno": {"texto": "-1",     "descripcion": "La proxima carta vale 1 punto menos.",               "emoji": "➖"},
+    "escudo":    {"texto": "Escudo", "descripcion": "Si te pasas de 21, se descarta tu ultima carta.",    "emoji": "🛡️"}
+  },
+  "escenarios": [
+    {
+      "id": "animales",
+      "nombre": "Animales",
+      "descripcion": "Solo animales. Recomendado para la primera sesion.",
+      "mazo": ["gato", "perro", "oso", "pato", "vaca", "pez", "conejo", "elefante"],
+      "copias": 2,
+      "semilla": 101,
+      "nivel_inicial": 1,
+      "mejoras_disponibles": ["mas_uno", "menos_uno"],
+      "objetivo": 21,
+      "crupier_se_planta": 17
+    },
+    {
+      "id": "comida",
+      "nombre": "Comida",
+      "descripcion": "Alimentos cotidianos del desayuno y el almuerzo.",
+      "mazo": ["pan", "leche", "manzana", "huevo", "queso", "banana", "arroz"],
+      "copias": 2,
+      "semilla": 202,
+      "nivel_inicial": 1,
+      "mejoras_disponibles": ["mas_uno", "menos_uno", "escudo"],
+      "objetivo": 21,
+      "crupier_se_planta": 17
+    },
+    {
+      "id": "casa",
+      "nombre": "Objetos de casa",
+      "descripcion": "Objetos y muebles del hogar.",
+      "mazo": ["mesa", "silla", "pelota", "zapato", "auto", "cama"],
+      "copias": 2,
+      "semilla": 303,
+      "nivel_inicial": 2,
+      "mejoras_disponibles": ["mas_uno", "escudo"],
+      "objetivo": 21,
+      "crupier_se_planta": 17
+    },
+    {
+      "id": "mixto",
+      "nombre": "Mixto",
+      "descripcion": "Todo el catalogo: animales, comida, objetos y actividades.",
+      "mazo": ["gato", "perro", "oso", "pato", "vaca", "pez", "conejo", "elefante",
+               "pan", "leche", "manzana", "huevo", "queso", "banana", "arroz",
+               "mesa", "silla", "pelota", "zapato", "auto", "cama",
+               "comer", "dormir", "saltar"],
+      "copias": 1,
+      "semilla": 404,
+      "nivel_inicial": 2,
+      "mejoras_disponibles": ["mas_uno", "menos_uno", "escudo"],
+      "objetivo": 21,
+      "crupier_se_planta": 17
+    }
+  ]
+}

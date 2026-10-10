@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Picto21 - Experimento B</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="barra">
+    <h1>Picto21</h1>
+    <div class="config" aria-label="Configuracion del terapeuta">
+      <label>Escenario
+        <select id="sel-escenario"></select>
+      </label>
+      <label>Nivel
+        <select id="sel-nivel">
+          <option value="1">1 - Elegir</option>
+          <option value="2">2 - Letras</option>
+          <option value="3">3 - Teclado</option>
+        </select>
+      </label>
+      <button id="btn-nueva" class="btn-chico">Nueva ronda</button>
+    </div>
+  </header>
+
+  <main>
+    <section class="marcadores">
+      <div class="marcador" aria-live="polite">
+        <span class="etiqueta">TU</span>
+        <span id="suma-jugador" class="numero">0</span>
+        <div id="mano-jugador" class="mini-mano"></div>
+      </div>
+      <div class="meta">
+        <span class="etiqueta">META</span>
+        <span class="numero">21</span>
+      </div>
+      <div class="marcador">
+        <span class="etiqueta">CRUPIER</span>
+        <span id="suma-crupier" class="numero">0</span>
+        <div id="mano-crupier" class="mini-mano"></div>
+      </div>
+    </section>
+
+    <section class="mesa">
+      <div id="pregunta" class="frase" aria-live="polite"></div>
+      <div class="carta-grande" id="carta">
+        <img id="carta-img" alt="">
+        <span id="carta-emoji" class="emoji-respaldo" hidden></span>
+      </div>
+      <button id="btn-audio" class="btn-audio" aria-label="Escuchar">🔊</button>
+      <div id="pistas" class="frase pistas" aria-live="polite"></div>
+      <div id="respuesta" class="respuesta"></div>
+      <div id="mensaje" class="mensaje" aria-live="assertive"></div>
+    </section>
+
+    <section class="acciones">
+      <button id="btn-pedir" class="btn-accion pedir">
+        <img src="https://static.arasaac.org/pictograms/5441/5441_500.png" alt="">
+        <span>PEDIR</span>
+      </button>
+      <button id="btn-parar" class="btn-accion parar">
+        <img src="https://static.arasaac.org/pictograms/7195/7195_500.png" alt="">
+        <span>PARAR</span>
+      </button>
+      <button id="btn-mejora" class="btn-accion mejora">
+        <span id="mejora-emoji" class="emoji-mejora"></span>
+        <span id="mejora-texto">MEJORA</span>
+      </button>
+    </section>
+    <div id="consejo" class="consejo" aria-live="polite"></div>
+  </main>
+
+  <footer>
+    Pictogramas: Sergio Palao. Origen: <a href="https://arasaac.org">ARASAAC</a>.
+    Licencia CC (BY-NC-SA). Propiedad: Gobierno de Aragon.
+  </footer>
+
+  <script src="datos.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
