@@ -6,7 +6,7 @@ const MAX_INTENTOS = 3;
 const CARTAS = Object.fromEntries(CATALOGO.cartas.map((c) => [c.id, c]));
 const ESC = Object.fromEntries(ESCENARIOS.escenarios.map((e) => [e.id, e]));
 const MEJORAS = ESCENARIOS.mejoras;
-const PICTO_PREGUNTA = { texto: "¿qué es?", arasaac_id: 11351, emoji: "❓" };
+const PICTO_PREGUNTA = { texto: "¿QUÉ ES?" };
 
 const $ = (id) => document.getElementById(id);
 let S = null;
@@ -75,7 +75,9 @@ function picto({ texto, arasaac_id, emoji }) {
   return d;
 }
 
-const nodoPregunta = picto(PICTO_PREGUNTA);
+const nodoPregunta = document.createElement("div");
+nodoPregunta.className = "pregunta-texto";
+nodoPregunta.textContent = PICTO_PREGUNTA.texto;
 
 // ------------------------------------------------------------------ pistas ID3
 
@@ -298,9 +300,16 @@ function render() {
   const reconocer = S.fase === "reconocer";
   const mostrandoCarta = reconocer;
   $("pregunta").replaceChildren(...(reconocer ? [nodoPregunta] : []));
+  const intentos = $("intentos");
+  intentos.hidden = !reconocer;
+  intentos.textContent = reconocer ? `Intento ${Math.min(S.intentos + 1, MAX_INTENTOS)} de ${MAX_INTENTOS}` : "";
   const img = $("carta-img"), em = $("carta-emoji");
   const cartaMostrada = mostrandoCarta ? S.carta : S.mano.at(-1)?.carta;
   if (cartaMostrada && img.dataset.carta !== cartaMostrada.id) {
+    const carta = $("carta");
+    carta.classList.remove("carta-entra");
+    void carta.offsetWidth;
+    carta.classList.add("carta-entra");
     img.dataset.carta = cartaMostrada.id;
     em.textContent = cartaMostrada.emoji;
     img.hidden = false; em.hidden = true;

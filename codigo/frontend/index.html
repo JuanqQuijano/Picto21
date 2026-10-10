@@ -11,12 +11,18 @@
 </head>
 <body>
   <header class="barra">
-    <h1>Picto21</h1>
+  <div class="barra-interior">
+    <div class="marca">
+      <h1>Picto21</h1>
+      <span>Aprender jugando</span>
+    </div>
     <div class="config" aria-label="Configuracion del terapeuta">
-      <label>Escenario
+      <label class="control">
+        <span>Escenario</span>
         <select id="sel-escenario"></select>
       </label>
-      <label>Nivel
+      <label class="control">
+        <span>Nivel</span>
         <select id="sel-nivel">
           <option value="1">1 - Elegir</option>
           <option value="2">2 - Letras</option>
@@ -25,7 +31,8 @@
       </label>
       <button id="btn-nueva" class="btn-chico">Nueva ronda</button>
     </div>
-  </header>
+  </div>
+</header>
 
   <main>
     <section class="marcadores">
@@ -46,32 +53,40 @@
     </section>
 
     <section class="mesa">
-      <div id="pregunta" class="frase" aria-live="polite"></div>
+      <div class="pregunta-panel">
+        <div id="pregunta" class="frase" aria-live="polite"></div>
+        <span id="intentos" class="indicador-intentos" aria-live="polite"></span>
+      </div>
       <div class="carta-grande" id="carta">
         <img id="carta-img" alt="">
         <span id="carta-emoji" class="emoji-respaldo" hidden></span>
       </div>
       <button id="btn-audio" class="btn-audio" aria-label="Escuchar">🔊</button>
-      <div id="pistas" class="frase pistas" aria-live="polite"></div>
-      <div id="respuesta" class="respuesta"></div>
-      <div id="mensaje" class="mensaje" aria-live="assertive"></div>
+      <div class="pistas-panel">
+        <div class="pistas-cabecera">
+          <span class="pistas-titulo">Pistas ID3</span>
+          <span class="pistas-subtitulo">Ayudas inteligentes</span>
+        </div>
+        <div id="pistas" class="frase pistas" aria-live="polite"></div>
+        </div>
+        <div id="respuesta" class="respuesta"></div>
+        <div id="mensaje" class="mensaje" aria-live="assertive"></div>
+        <section class="acciones">
+          <button id="btn-pedir" class="btn-accion pedir">
+            <img src="https://static.arasaac.org/pictograms/5441/5441_500.png" alt="">
+            <span>PEDIR</span>
+          </button>
+          <button id="btn-parar" class="btn-accion parar">
+            <img src="https://static.arasaac.org/pictograms/7195/7195_500.png" alt="">
+            <span>PARAR</span>
+          </button>
+          <button id="btn-mejora" class="btn-accion mejora">
+            <span id="mejora-emoji" class="emoji-mejora"></span>
+            <span id="mejora-texto">MEJORA</span>
+          </button>
+        </section>
+        <div id="consejo" class="consejo" aria-live="polite"></div>
     </section>
-
-    <section class="acciones">
-      <button id="btn-pedir" class="btn-accion pedir">
-        <img src="https://static.arasaac.org/pictograms/5441/5441_500.png" alt="">
-        <span>PEDIR</span>
-      </button>
-      <button id="btn-parar" class="btn-accion parar">
-        <img src="https://static.arasaac.org/pictograms/7195/7195_500.png" alt="">
-        <span>PARAR</span>
-      </button>
-      <button id="btn-mejora" class="btn-accion mejora">
-        <span id="mejora-emoji" class="emoji-mejora"></span>
-        <span id="mejora-texto">MEJORA</span>
-      </button>
-    </section>
-    <div id="consejo" class="consejo" aria-live="polite"></div>
   </main>
 
   <div id="fin-overlay" class="fin-overlay hidden" aria-live="polite">
