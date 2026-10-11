@@ -11,65 +11,79 @@
 </head>
 <body>
   <header class="barra">
-  <div class="barra-interior">
-    <div class="marca">
-      <h1>Picto21</h1>
-      <span>Aprender jugando</span>
+    <div class="barra-interior">
+      <div class="marca">
+        <div class="marca-icono" aria-hidden="true">🎴</div>
+        <div class="marca-texto">
+          <h1>Picto21</h1>
+          <span>Aprender jugando</span>
+        </div>
+      </div>
+      <div class="config" aria-label="Configuracion del terapeuta">
+        <label class="control">
+          <span>Escenario</span>
+          <select id="sel-escenario"></select>
+        </label>
+        <label class="control">
+          <span>Nivel</span>
+          <select id="sel-nivel">
+            <option value="1">1 - Elegir</option>
+            <option value="2">2 - Letras</option>
+            <option value="3">3 - Teclado</option>
+          </select>
+        </label>
+        <button id="btn-nueva" class="btn-chico">Nueva ronda</button>
+      </div>
     </div>
-    <div class="config" aria-label="Configuracion del terapeuta">
-      <label class="control">
-        <span>Escenario</span>
-        <select id="sel-escenario"></select>
-      </label>
-      <label class="control">
-        <span>Nivel</span>
-        <select id="sel-nivel">
-          <option value="1">1 - Elegir</option>
-          <option value="2">2 - Letras</option>
-          <option value="3">3 - Teclado</option>
-        </select>
-      </label>
-      <button id="btn-nueva" class="btn-chico">Nueva ronda</button>
-    </div>
-  </div>
-</header>
+  </header>
 
   <main>
-    <section class="marcadores">
-      <div class="marcador" aria-live="polite">
-        <span class="etiqueta">TU</span>
-        <span id="suma-jugador" class="numero">0</span>
+    <section class="marcadores" aria-label="Puntuacion">
+      <div class="marcador jugador" aria-live="polite">
+        <div class="marcador-cabecera">
+          <span class="etiqueta">TU</span>
+          <span id="suma-jugador" class="numero">0</span>
+        </div>
         <div id="mano-jugador" class="mini-mano"></div>
       </div>
       <div class="meta">
         <span class="etiqueta">META</span>
         <span class="numero">21</span>
       </div>
-      <div class="marcador">
-        <span class="etiqueta">CRUPIER</span>
-        <span id="suma-crupier" class="numero">0</span>
+      <div class="marcador crupier">
+        <div class="marcador-cabecera">
+          <span class="etiqueta">CRUPIER</span>
+          <span id="suma-crupier" class="numero">0</span>
+        </div>
         <div id="mano-crupier" class="mini-mano"></div>
       </div>
     </section>
 
     <section class="mesa">
-      <div class="pregunta-panel">
-        <div id="pregunta" class="frase" aria-live="polite"></div>
-        <span id="intentos" class="indicador-intentos" aria-live="polite"></span>
-      </div>
-      <div class="carta-grande" id="carta">
-        <img id="carta-img" alt="">
-        <span id="carta-emoji" class="emoji-respaldo" hidden></span>
-      </div>
-      <button id="btn-audio" class="btn-audio" aria-label="Escuchar">🔊</button>
-      <div class="pistas-panel">
-        <div class="pistas-cabecera">
-          <span class="pistas-titulo">Pistas ID3</span>
-          <span class="pistas-subtitulo">Ayudas inteligentes</span>
+      <div class="zona-carta">
+        <div class="pregunta-panel">
+          <div id="pregunta" class="frase" aria-live="polite"></div>
+          <span id="intentos" class="indicador-intentos" aria-live="polite"></span>
+          <button id="btn-audio" class="btn-audio" aria-label="Escuchar">🔊</button>
         </div>
-        <div id="pistas" class="frase pistas" aria-live="polite"></div>
+        <div class="carta-grande" id="carta">
+          <img id="carta-img" alt="">
+          <span id="carta-emoji" class="emoji-respaldo" hidden></span>
+        </div>
+      </div>
+
+      <div class="zona-respuesta">
+        <div class="pistas-panel">
+          <div class="pistas-cabecera">
+            <span class="pistas-titulo">Pistas</span>
+            <span class="pistas-subtitulo">Ayudas para adivinar</span>
+          </div>
+          <div id="pistas" class="frase pistas" aria-live="polite"></div>
         </div>
         <div id="respuesta" class="respuesta"></div>
+      </div>
+
+      <div class="zona-acciones">
         <div id="mensaje" class="mensaje" aria-live="assertive"></div>
         <section class="acciones">
           <button id="btn-pedir" class="btn-accion pedir">
@@ -86,6 +100,7 @@
           </button>
         </section>
         <div id="consejo" class="consejo" aria-live="polite"></div>
+      </div>
     </section>
   </main>
 
