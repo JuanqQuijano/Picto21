@@ -73,6 +73,7 @@
       </div>
 
       <div class="zona-respuesta">
+        <h2 id="titulo-eleccion" class="titulo-eleccion" hidden>Elige una carta</h2>
         <div class="pistas-panel">
           <div class="pistas-cabecera">
             <span class="pistas-titulo">Pistas</span>
@@ -104,12 +105,14 @@
     </section>
   </main>
 
-  <div id="fin-overlay" class="fin-overlay hidden" aria-live="polite">
+  <div id="fin-overlay" class="fin-overlay hidden" aria-live="polite" aria-hidden="true">
     <div class="fin-card">
-      <div class="fin-escena" aria-hidden="true"></div>
+      <div class="fin-escena" aria-hidden="true">
+        <div id="fin-abanico" class="fin-abanico"></div>
+      </div>
       <div class="fin-contenido">
-        <h2 id="fin-titulo">¡Lo hiciste genial!</h2>
-        <p id="fin-mensaje">La próxima ronda será todavía mejor.</p>
+        <h2 id="fin-titulo">¡Felicidades!</h2>
+        <p id="fin-mensaje">¡Ganaste el juego!</p>
         <button id="btn-volver-jugar" class="btn-volver">Volver a jugar</button>
       </div>
     </div>

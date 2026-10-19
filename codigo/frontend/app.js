@@ -158,18 +158,23 @@ function palabraQueHabriaSalvado(carta, dicha, sumaAntes, mejora, sirve) {
 // ------------------------------------------------------------------ reglas
 
 function nuevaRonda() {
-  $("fin-overlay").classList.add("hidden");
+  const overlay = $("fin-overlay");
+  overlay.classList.add("hidden");
+  overlay.setAttribute("aria-hidden", "true");
   const esc = ESC[$("sel-escenario").value];
   const mazo = barajar(Array(esc.copias).fill(esc.mazo).flat());
   const visible = mazo.shift();
   S = {
-    esc, mazo, mano: [], suma: 0, fase: "reconocer",
+    esc, mazo, mano: [], suma: 0, fase: "decidir",
     crupier: { visible, mano: [visible], suma: valor(CARTAS[visible].palabra) },
     mejora: esc.mejoras_disponibles.length ? esc.mejoras_disponibles[Math.floor(Math.random() * esc.mejoras_disponibles.length)] : null,
     mejoraActiva: null, carta: null, intentos: 0, pistas: [], nivel: Number($("sel-nivel").value),
     candidatos: [...new Set(esc.mazo)].map((id) => CARTAS[id]),
+    opciones: [], erradas: [],
   };
-  sacarCarta();
+  mensaje("", "");
+  render();
+  decir("¿Pides carta o paras?");
 }
 
 function sacarCarta() {
@@ -177,10 +182,12 @@ function sacarCarta() {
   S.intentos = 0;
   S.pistas = [];
   S.fase = "reconocer";
-  S.opciones = barajar([S.carta.palabra, ...barajar(S.candidatos.filter((c) => c.id !== S.carta.id)).slice(0, 2).map((c) => c.palabra)]);
+  const distractor = barajar(S.candidatos.filter((c) => c.id !== S.carta.id))[0];
+  S.opciones = barajar([S.carta, distractor].filter(Boolean));
+  S.erradas = [];
   mensaje("", "");
   render();
-  decir("¿Qué es?");
+  decir(S.nivel === 1 ? "Elige una carta" : "¿Qué es?");
 }
 
 function responder(texto) {
@@ -196,6 +203,9 @@ function responder(texto) {
       decir(`Es ${carta.palabra}. ¡Sigamos!`);
       agregarCarta(carta.palabra);
     } else {
+      S.erradas = S.erradas || [];
+      const clickeada = S.opciones?.find((c) => palabrasValidas(c).some((p) => normalizar(p) === normalizar(texto)));
+      if (clickeada && !S.erradas.includes(clickeada.id)) S.erradas.push(clickeada.id);
       const p = mejorPista(carta, S.candidatos, S.pistas.map((x) => x.atributo));
       if (p) S.pistas.push(p);
       mensaje("Intenta otra vez", "mal");
@@ -274,7 +284,7 @@ function terminar(res, alt) {
   const titulo = $("fin-titulo");
   const detalle = $("fin-mensaje");
   const mensajes = {
-    gana: ["¡Lo hiciste genial!", "¡Qué bien jugaste! Sigue así, eres muy listo/a."],
+    gana: ["¡Felicidades!", "¡Ganaste el juego!"],
     empate: ["¡Empataste!", "No pasa nada, ¡otra vuelta y lo intentamos de nuevo!"],
     pierde: ["¡Otra vez será!", "No te preocupes, ¡la próxima partida puede salir mejor!"],
     se_paso: ["¡Casi lo logras!", "Te pasaste un poquito, pero aún puedes volver a jugar y probar otra vez."],
@@ -282,8 +292,42 @@ function terminar(res, alt) {
   titulo.textContent = mensajes[res][0];
   detalle.textContent = alt ? `Pudiste decir ${alt.palabra.toUpperCase()} y quedarse en ${alt.suma}.` : mensajes[res][1];
   overlay.classList.remove("hidden");
+  overlay.setAttribute("aria-hidden", "false");
+  renderAbanico();
+  overlay.classList.toggle("victoria", res === "gana");
 
   setTimeout(() => decir(voz), 400);
+}
+
+function renderAbanico() {
+  const caja = $("fin-abanico");
+  if (!caja || !S?.mano.length) {
+    if (caja) caja.replaceChildren();
+    return;
+  }
+  const n = S.mano.length;
+  caja.replaceChildren(...S.mano.map((m, i) => {
+    const d = document.createElement("div");
+    d.className = "carta-fan";
+    const offset = i - (n - 1) / 2;
+    const giro = n === 1 ? 0 : offset * 14;
+    const spread = n === 1 ? 0 : offset * 58;
+    d.style.setProperty("--giro", `${giro}deg`);
+    d.style.setProperty("--desplaza", `${spread}px`);
+    d.style.setProperty("--i", String(i));
+    const cabeza = document.createElement("div");
+    cabeza.className = "carta-fan-cabeza";
+    const nombre = document.createElement("span");
+    nombre.className = "carta-fan-nombre";
+    nombre.textContent = m.carta.palabra.toUpperCase();
+    const valorEl = document.createElement("span");
+    valorEl.className = "carta-fan-valor";
+    valorEl.textContent = m.v;
+    cabeza.append(nombre, valorEl);
+    d.append(cabeza, imgConRespaldo(m.carta.arasaac_id, m.carta.emoji));
+    d.style.zIndex = String(Math.round(n - Math.abs(i - (n - 1) / 2)));
+    return d;
+  }));
 }
 
 function mensaje(t, clase) { const m = $("mensaje"); m.textContent = t; m.className = `mensaje ${clase}`; }
@@ -297,14 +341,23 @@ function render() {
   const manoC = S.fase === "fin" ? S.crupier.mano : [S.crupier.visible];
   renderMano($("mano-crupier"), manoC.map((id) => ({ c: CARTAS[id], v: valor(CARTAS[id].palabra) })));
 
+  const mesa = document.querySelector(".mesa");
   const reconocer = S.fase === "reconocer";
-  const mostrandoCarta = reconocer;
+  const decidir = S.fase === "decidir";
+  mesa.classList.toggle("modo-reconocer", reconocer);
+  mesa.classList.toggle("modo-decidir", decidir);
+  mesa.classList.toggle("modo-fin", S.fase === "fin");
+  mesa.classList.toggle("nivel-1", reconocer && S.nivel === 1);
+  const mostrandoCarta = reconocer && S.nivel !== 1;
+  nodoPregunta.textContent = S.nivel === 1 ? "Elige una carta" : PICTO_PREGUNTA.texto;
   $("pregunta").replaceChildren(...(reconocer ? [nodoPregunta] : []));
+  const tituloEleccion = $("titulo-eleccion");
+  if (tituloEleccion) tituloEleccion.hidden = true;
   const intentos = $("intentos");
   intentos.hidden = !reconocer;
   intentos.textContent = reconocer ? `Intento ${Math.min(S.intentos + 1, MAX_INTENTOS)} de ${MAX_INTENTOS}` : "";
   const img = $("carta-img"), em = $("carta-emoji");
-  const cartaMostrada = mostrandoCarta ? S.carta : S.mano.at(-1)?.carta;
+  const cartaMostrada = mostrandoCarta ? S.carta : null;
   if (cartaMostrada && img.dataset.carta !== cartaMostrada.id) {
     const carta = $("carta");
     carta.classList.remove("carta-entra");
@@ -316,13 +369,14 @@ function render() {
     img.onerror = () => { img.hidden = true; em.hidden = false; };
     img.removeAttribute("src");
     img.src = urlPicto(cartaMostrada.arasaac_id);
+  } else if (!cartaMostrada) {
+    img.dataset.carta = "";
   }
   $("pistas").replaceChildren(...(reconocer ? S.pistas.map(picto) : []));
   renderRespuesta(reconocer);
 
-  const decidir = S.fase === "decidir";
   $("btn-pedir").disabled = !decidir || !S.mazo.length;
-  $("btn-parar").disabled = !decidir;
+  $("btn-parar").disabled = !decidir || !S.mano.length;
   $("btn-mejora").disabled = !decidir || !S.mejora || !!S.mejoraActiva;
   const m = S.mejoraActiva || S.mejora;
   $("mejora-emoji").textContent = m ? MEJORAS[m].emoji : "—";
@@ -353,18 +407,36 @@ function renderMano(cont, cartas) {
 function renderRespuesta(activo) {
   const r = $("respuesta");
   r.replaceChildren();
+  r.classList.remove("opciones-cartas");
   if (!activo) return;
 
   if (S.nivel === 1) {
-    S.opciones.forEach((o) => {
+    r.classList.add("opciones-cartas");
+    (S.opciones || []).forEach((carta) => {
       const b = document.createElement("button");
-      b.className = "opcion";
-      b.textContent = o;
-      b.onclick = () => responder(o);
-      b.onmouseenter = b.onfocus = () => decir(o);
+      b.className = "carta-opcion";
+      b.type = "button";
+      if (S.erradas?.includes(carta.id)) b.classList.add("errada");
+      const cabeza = document.createElement("div");
+      cabeza.className = "carta-opcion-cabeza";
+      const nombre = document.createElement("span");
+      nombre.className = "carta-opcion-nombre";
+      nombre.textContent = carta.palabra.toUpperCase();
+      const valorEl = document.createElement("span");
+      valorEl.className = "carta-opcion-valor";
+      valorEl.textContent = carta.valor ?? valor(carta.palabra);
+      cabeza.append(nombre, valorEl);
+      b.append(cabeza, imgConRespaldo(carta.arasaac_id, carta.emoji));
+      b.onclick = () => {
+        if (b.classList.contains("errada")) return;
+        S.carta = carta;
+        aceptarPalabra(carta.palabra);
+      };
+      b.onmouseenter = b.onfocus = () => decir(carta.palabra);
       r.append(b);
     });
   } else if (S.nivel === 2) {
+    r.classList.remove("opciones-cartas");
     const armada = document.createElement("div");
     armada.className = "palabra-armada";
     let texto = "";
@@ -409,6 +481,7 @@ function renderRespuesta(activo) {
     ok.onclick = () => { if (validas.includes(normalizar(texto))) responder(texto); };
     r.append(armada, ...fichas, ok, borrar);
   } else {
+    r.classList.remove("opciones-cartas");
     const inp = document.createElement("input");
     inp.className = "entrada";
     inp.autocomplete = "off";
@@ -444,7 +517,10 @@ function init() {
   };
   $("btn-audio").onclick = () => {
     if (S.fase === "reconocer") {
-      decir(S.pistas.length ? `¿Qué es? Pista: ${S.pistas.map((p) => p.texto).join(", ")}` : "¿Qué es?");
+      const base = S.nivel === 1 ? "Elige una carta" : "¿Qué es?";
+      decir(S.pistas.length ? `${base}. Pista: ${S.pistas.map((p) => p.texto).join(", ")}` : base);
+    } else if (S.fase === "decidir" && !S.mano.length) {
+      decir("¿Pides carta o paras?");
     } else {
       decir(`Tienes ${S.suma}. ${$("consejo").textContent}`);
     }
