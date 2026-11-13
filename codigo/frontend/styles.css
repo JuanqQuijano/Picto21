@@ -639,6 +639,27 @@ main {
 
 .btn-audio:active { transform: translateY(1px); box-shadow: none; }
 
+.botones-voz {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  z-index: 5;
+  position: relative;
+}
+
+.btn-voz {
+  font-size: 22px;
+  width: 52px;
+  height: 52px;
+  border-color: var(--coral);
+}
+
+.btn-voz.escuchando {
+  border-color: var(--coral-oscuro);
+  background: var(--rojo-claro);
+  animation: latido 1s ease-in-out infinite;
+}
+
 /* Pistas y respuesta */
 .pistas-panel {
   padding: 10px 14px;

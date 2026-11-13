@@ -64,7 +64,10 @@
         <div class="pregunta-panel">
           <div id="pregunta" class="frase" aria-live="polite"></div>
           <span id="intentos" class="indicador-intentos" aria-live="polite"></span>
-          <button id="btn-audio" class="btn-audio" aria-label="Escuchar">🔊</button>
+          <div class="botones-voz">
+            <button id="btn-audio" class="btn-audio" type="button" aria-label="Escuchar">🔊</button>
+            <button id="btn-voz" class="btn-audio btn-voz" type="button" aria-label="Decirlo" hidden>🎤</button>
+          </div>
         </div>
         <div class="carta-grande" id="carta">
           <img id="carta-img" alt="">
@@ -124,6 +127,6 @@
   </footer>
 
   <script src="datos.js"></script>
-  <script src="app.js"></script>
+  <script src="app.js?v=hito2-voz"></script>
 </body>
 </html>

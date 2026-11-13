@@ -12,6 +12,8 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import Optional
 
+from pathlib import Path
+
 from catalogo import Carta, Catalogo, normalizar, valor
 from juego import (
     PEDIR,
@@ -24,6 +26,7 @@ from juego import (
     acciones_validas,
     valor_con_mejora,
 )
+from mdp import acciones_red, cargar_politica, estado_reducido, parse_clave
 
 
 @dataclass(frozen=True)
@@ -139,6 +142,46 @@ class ConsejeroAleatorio(Consejero):
 
     def sugerir_palabra(self, estado: EstadoJuego, carta: Carta, dicha: str) -> Optional[str]:
         return None
+
+
+_ACCION = {"pedir": PEDIR, "plantarse": PLANTARSE, "usar_mejora": USAR_MEJORA}
+
+
+class ConsejeroTabular(Consejero):
+    """Politica aprendida (value iteration o Q-Learning) con la misma interfaz."""
+
+    def __init__(self, politica: dict, origen: str = "q"):
+        self.origen = origen
+        tabla = politica.get("pi_q") if origen == "q" else politica.get("pi_vi")
+        self.pi = {parse_clave(k): v for k, v in (tabla or {}).items()}
+        self.q = {parse_clave(k): v for k, v in politica.get("q", {}).items()} if origen == "q" else {}
+
+    @classmethod
+    def desde_archivo(cls, ruta: Path, origen: str = "q") -> "ConsejeroTabular":
+        return cls(cargar_politica(ruta), origen)
+
+    def sugerir(self, estado: EstadoJuego, catalogo: Catalogo) -> Optional[Sugerencia]:
+        if estado.fase != Fase.DECIDIR:
+            return None
+        s = estado_reducido(estado, catalogo)
+        validas = {a.tipo for a in acciones_validas(estado)}
+        preferida = self.pi.get(s)
+        if preferida not in validas:
+            for cand in acciones_red(s):
+                if cand in validas:
+                    preferida = cand
+                    break
+        if preferida not in validas:
+            return ConsejeroHeuristico().sugerir(estado, catalogo)
+        suma = estado.suma_jugador
+        faltan = estado.objetivo - suma
+        razones = {
+            "pedir": f"Te faltan {faltan}. Pide otra carta.",
+            "plantarse": f"Tienes {suma}. Mejor para.",
+            "usar_mejora": "Usa la mejora ahora, te puede ayudar.",
+        }
+        pictos = {"pedir": "[👍 PEDIR]", "plantarse": "[✋ PARAR]", "usar_mejora": "[⭐ MEJORA]"}
+        return Sugerencia(_ACCION[preferida], razones[preferida], pictos[preferida])
 
 
 class TutorHeuristico:

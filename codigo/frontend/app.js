@@ -10,6 +10,23 @@ const PICTO_PREGUNTA = { texto: "¿QUÉ ES?" };
 
 const $ = (id) => document.getElementById(id);
 let S = null;
+let API_OK = false;
+const API_BASE = () => {
+  if (location.protocol.startsWith("http") && location.hostname) {
+    return `${location.origin}/api`;
+  }
+  return "http://127.0.0.1:8000/api";
+};
+
+async function api(ruta, body) {
+  const r = await fetch(`${API_BASE()}${ruta}`, {
+    method: body === undefined ? "GET" : "POST",
+    headers: body === undefined ? {} : { "Content-Type": "application/json" },
+    body: body === undefined ? undefined : JSON.stringify(body),
+  });
+  if (!r.ok) throw new Error(String(r.status));
+  return r.json();
+}
 
 // ------------------------------------------------------------------ utilidades
 
@@ -120,7 +137,7 @@ function valorConMejora(base, m) {
   return base;
 }
 
-function sugerir() {
+function sugerirLocal() {
   if (S.fase !== "decidir") return null;
   const suma = S.suma, visible = valor(CARTAS[S.crupier.visible].palabra), faltan = 21 - suma;
   const puedePedir = S.mazo.length > 0;
@@ -190,10 +207,22 @@ function sacarCarta() {
   decir(S.nivel === 1 ? "Elige una carta" : "¿Qué es?");
 }
 
-function responder(texto) {
+async function validarRemoto(texto, cartaId) {
+  try {
+    return await api("/validar", { texto, carta_id: cartaId });
+  } catch {
+    return null;
+  }
+}
+
+async function responder(texto) {
   if (S.fase !== "reconocer") return;
   const carta = S.carta;
-  const coincide = palabrasValidas(carta).map(normalizar).find((p) => p === normalizar(texto));
+  let coincide = palabrasValidas(carta).map(normalizar).find((p) => p === normalizar(texto));
+  if (!coincide && S.nivel >= 2) {
+    const v = await validarRemoto(texto, carta.id);
+    if (v?.ok && v.palabra) coincide = v.palabra;
+  }
   if (coincide) {
     aceptarPalabra(coincide);
   } else {
@@ -356,6 +385,8 @@ function render() {
   const intentos = $("intentos");
   intentos.hidden = !reconocer;
   intentos.textContent = reconocer ? `Intento ${Math.min(S.intentos + 1, MAX_INTENTOS)} de ${MAX_INTENTOS}` : "";
+  const btnVoz = $("btn-voz");
+  if (btnVoz) btnVoz.hidden = !(reconocer && S.nivel >= 2);
   const img = $("carta-img"), em = $("carta-emoji");
   const cartaMostrada = mostrandoCarta ? S.carta : null;
   if (cartaMostrada && img.dataset.carta !== cartaMostrada.id) {
@@ -383,13 +414,35 @@ function render() {
   $("mejora-texto").textContent = S.mejoraActiva ? `${MEJORAS[m].texto} ACTIVA` : m ? MEJORAS[m].texto : "SIN MEJORA";
 
   document.querySelectorAll(".btn-accion").forEach((b) => b.classList.remove("sugerida"));
-  const sug = sugerir();
-  if (sug) {
-    $(`btn-${sug[0]}`).classList.add("sugerida");
-    $("consejo").textContent = `Consejo: ${sug[1]}`;
-  } else {
-    $("consejo").textContent = "";
-  }
+  const sug = sugerirLocal();
+  if (sug) aplicarConsejo(sug[0], sug[1]);
+  else $("consejo").textContent = "";
+  if (decidir) refrescarConsejoRemoto();
+}
+
+function aplicarConsejo(accion, razon) {
+  document.querySelectorAll(".btn-accion").forEach((b) => b.classList.remove("sugerida"));
+  const btn = $(`btn-${accion}`);
+  if (btn) btn.classList.add("sugerida");
+  $("consejo").textContent = razon ? `Consejo: ${razon}` : "";
+}
+
+function refrescarConsejoRemoto() {
+  if (!API_OK || !S || S.fase !== "decidir") return;
+  const token = `${S.suma}-${S.crupier.visible}-${S.mejora}-${S.mejoraActiva}`;
+  api("/sugerir", {
+    suma: S.suma,
+    visible: valor(CARTAS[S.crupier.visible].palabra),
+    mejora: S.mejora,
+    mejora_activa: S.mejoraActiva,
+    puede_pedir: S.mazo.length > 0,
+    origen: "q",
+  }).then((r) => {
+    if (!S || S.fase !== "decidir") return;
+    const ahora = `${S.suma}-${S.crupier.visible}-${S.mejora}-${S.mejoraActiva}`;
+    if (ahora !== token || !r?.accion) return;
+    aplicarConsejo(r.accion, r.razon);
+  }).catch(() => {});
 }
 
 function renderMano(cont, cartas) {
@@ -525,7 +578,72 @@ function init() {
       decir(`Tienes ${S.suma}. ${$("consejo").textContent}`);
     }
   };
+  $("btn-voz").onclick = reconocerVoz;
+  api("/salud").then((s) => { API_OK = !!s.ok; }).catch(() => { API_OK = false; });
   nuevaRonda();
+}
+
+let reconocedor = null;
+
+function reconocerVoz() {
+  if (!S || S.fase !== "reconocer" || S.nivel < 2) return;
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) {
+    mensaje("El dictado solo funciona en Chrome o Edge. Abre http://127.0.0.1:8000/ en Chrome, no en la vista previa.", "mal");
+    return;
+  }
+  if (window.speechSynthesis) speechSynthesis.cancel();
+  if (reconocedor) {
+    try { reconocedor.abort(); } catch { /* nada */ }
+    reconocedor = null;
+  }
+
+  const btn = $("btn-voz");
+  const rec = new SR();
+  reconocedor = rec;
+  rec.lang = "es-ES";
+  rec.interimResults = true;
+  rec.maxAlternatives = 3;
+  rec.continuous = false;
+  btn.classList.add("escuchando");
+  mensaje("Habla ahora…", "");
+  let oido = "";
+  let enviado = false;
+  const enviar = (t) => {
+    if (enviado || !t) return;
+    enviado = true;
+    responder(t);
+  };
+
+  rec.onresult = (e) => {
+    const last = e.results[e.results.length - 1];
+    oido = ((last[0] && last[0].transcript) || "").trim();
+    if (oido) mensaje(`“${oido}”`, "");
+    if (last.isFinal) enviar(oido);
+  };
+  rec.onerror = (e) => {
+    const err = e.error || "";
+    if (err === "aborted") return;
+    const textos = {
+      "no-speech": "No escuché nada. Pulsa el micrófono otra vez y di la palabra enseguida.",
+      "not-allowed": "Chrome bloqueó el micrófono. Candado al lado de la dirección → Micrófono → Permitir.",
+      "service-not-allowed": "Chrome bloqueó el micrófono. Candado al lado de la dirección → Micrófono → Permitir.",
+      "audio-capture": "No encuentro un micrófono. Revisa que Windows lo tenga activado.",
+      "network": "El dictado de Chrome necesita internet.",
+    };
+    mensaje(textos[err] || `No pude escucharte (${err}).`, "mal");
+  };
+  rec.onend = () => {
+    if (reconocedor === rec) reconocedor = null;
+    btn.classList.remove("escuchando");
+    enviar(oido);
+  };
+  try {
+    rec.start();
+  } catch (err) {
+    btn.classList.remove("escuchando");
+    mensaje("No pude iniciar el micrófono. Abre esta página en Chrome: http://127.0.0.1:8000/", "mal");
+  }
 }
 
 init();
