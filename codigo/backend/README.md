@@ -6,8 +6,8 @@ agente orientador neuronal al frontend. Sirve tambien la interfaz.
 ```bash
 cd codigo
 pip install -r requirements.txt
-python ia_models/entrenar_hito2.py
-python ia_models/entrenar_orientador.py
+python scripts/entrenar_hito2.py
+python scripts/entrenar_orientador.py
 uvicorn backend.main:app --app-dir . --reload --port 8000
 ```
 
