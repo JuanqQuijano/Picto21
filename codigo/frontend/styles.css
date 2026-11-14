@@ -13,11 +13,11 @@
   --r-xl: 34px;
   --r-pill: 999px;
 
-  --cielo: #dbeeff;
-  --crema: #fffaf1;
-  --durazno: #f7b28c;
-  --coral: #ef7a58;
-  --coral-oscuro: #d55a3c;
+  --cielo: #eef2ff;
+  --crema: #f8fafc;
+  --durazno: #fbbf24;
+  --coral: #6366f1;
+  --coral-oscuro: #4f46e5;
   --texto: #36424f;
   --texto-fuerte: #222c37;
   --texto-suave: #6b7785;
@@ -69,8 +69,8 @@ body::before {
   inset: 0;
   z-index: -1;
   background-image:
-    radial-gradient(1200px 600px at 15% -10%, rgba(255,255,255,0.55), transparent 60%),
-    linear-gradient(180deg, #eaf4ff 0%, var(--cielo) 45%, #f3ecff 100%);
+    radial-gradient(1200px 600px at 15% -10%, rgba(99,102,241,0.18), transparent 60%),
+    linear-gradient(180deg, #eef2ff 0%, var(--cielo) 45%, #f5f3ff 100%);
 }
 
 button, select, input { font: inherit; color: inherit; }
@@ -473,7 +473,7 @@ main {
   gap: 8px;
   padding: 12px;
   min-height: 280px;
-  border: 6px solid #e7c56a;
+  border: 6px solid var(--durazno);
   border-radius: 22px;
   background: #fff;
   box-shadow: var(--sombra);
@@ -499,7 +499,7 @@ main {
   font-family: var(--font-title);
   font-weight: 700;
   color: #fff;
-  background: #24344d;
+  background: #312e81;
   border-radius: 10px;
   padding: 6px 12px;
   line-height: 1.1;
@@ -1021,7 +1021,7 @@ main {
   font-family: var(--font-title);
   font-weight: 700;
   color: #fff;
-  background: #24344d;
+  background: #312e81;
   border-radius: 8px;
   padding: 4px 8px;
   line-height: 1.1;
