@@ -674,8 +674,7 @@ function renderRespuesta(activo) {
       b.append(cabeza, imgConRespaldo(carta.arasaac_id, carta.emoji));
       b.onclick = () => {
         if (b.classList.contains("errada")) return;
-        S.carta = carta;
-        aceptarPalabra(carta.palabra);
+        responder(carta.palabra);
       };
       b.onmouseenter = b.onfocus = () => decir(carta.palabra);
       r.append(b);
