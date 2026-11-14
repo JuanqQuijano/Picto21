@@ -1,46 +1,46 @@
 /* Picto21 · layout por zonas: puntuación, carta, respuesta, acciones */
 
 :root {
-  --fs-xs: 0.82rem;
-  --fs-sm: 1rem;
-  --fs-md: 1.35rem;
-  --fs-lg: 2rem;
-  --fs-xl: 3.6rem;
+  --fs-xs: 0.95rem;
+  --fs-sm: 1.25rem;
+  --fs-md: 1.7rem;
+  --fs-lg: 2.4rem;
+  --fs-xl: 4rem;
 
-  --r-sm: 12px;
-  --r-md: 18px;
-  --r-lg: 26px;
-  --r-xl: 34px;
-  --r-pill: 999px;
+  --r-sm: 4px;
+  --r-md: 6px;
+  --r-lg: 8px;
+  --r-xl: 10px;
+  --r-pill: 6px;
 
-  --cielo: #dbeeff;
-  --crema: #fffaf1;
-  --durazno: #f7b28c;
-  --coral: #ef7a58;
-  --coral-oscuro: #d55a3c;
+  --cielo: #5c94fc;
+  --crema: #f8f8f8;
+  --durazno: #fbd000;
+  --coral: #e52521;
+  --coral-oscuro: #b91c1c;
   --texto: #36424f;
   --texto-fuerte: #222c37;
   --texto-suave: #6b7785;
-  --verde: #57b86a;
-  --verde-oscuro: #3c9152;
-  --verde-claro: #e4f6e7;
-  --rojo: #e06a5c;
-  --rojo-oscuro: #c14a3d;
-  --rojo-claro: #fbe6e2;
-  --azul: #4f9fd6;
-  --azul-oscuro: #357cb0;
-  --azul-claro: #e2f0fb;
+  --verde: #43b047;
+  --verde-oscuro: #2e7d32;
+  --verde-claro: #e8f5e9;
+  --rojo: #e52521;
+  --rojo-oscuro: #b91c1c;
+  --rojo-claro: #fdecea;
+  --azul: #049cd8;
+  --azul-oscuro: #0277bd;
+  --azul-claro: #e1f5fe;
 
   --superficie: #fffdf8;
-  --borde: rgba(54, 66, 79, 0.10);
-  --borde-fuerte: rgba(54, 66, 79, 0.16);
+  --borde: rgba(0, 0, 0, 0.35);
+  --borde-fuerte: rgba(0, 0, 0, 0.6);
   --sombra-sm: 0 2px 6px rgba(80, 60, 50, 0.08);
   --sombra: 0 8px 22px rgba(80, 60, 50, 0.12);
   --sombra-lg: 0 16px 40px rgba(80, 60, 50, 0.16);
   --sombra-boton: 0 4px 0 rgba(80, 60, 50, 0.14);
 
-  --font-title: "Fredoka", "Segoe UI", system-ui, sans-serif;
-  --font-body: "Nunito", "Segoe UI", system-ui, sans-serif;
+  --font-title: "Press Start 2P", "VT323", monospace;
+  --font-body: "VT323", "Press Start 2P", monospace;
 
   --tecla: 78px;
 }
@@ -69,8 +69,8 @@ body::before {
   inset: 0;
   z-index: -1;
   background-image:
-    radial-gradient(1200px 600px at 15% -10%, rgba(255,255,255,0.55), transparent 60%),
-    linear-gradient(180deg, #eaf4ff 0%, var(--cielo) 45%, #f3ecff 100%);
+    radial-gradient(circle at 20% 20%, rgba(255,255,255,0.35) 0 2px, transparent 2px),
+    linear-gradient(180deg, #87ceeb 0%, var(--cielo) 60%, #5c94fc 100%);
 }
 
 button, select, input { font: inherit; color: inherit; }
