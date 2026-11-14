@@ -746,9 +746,9 @@ function renderRespuesta(activo) {
 function init() {
   const sel = $("sel-escenario");
   ESCENARIOS.escenarios.forEach((e) => sel.add(new Option(e.nombre, e.id)));
-  sel.onchange = () => { $("sel-nivel").value = ESC[sel.value].nivel_inicial; nuevaRonda(); };
+  sel.onchange = () => { $("sel-nivel").value = ESC[sel.value].nivel_inicial; if (S) nuevaRonda(); };
   $("sel-nivel").value = ESC[sel.value].nivel_inicial;
-  $("sel-nivel").onchange = () => { S.nivel = Number($("sel-nivel").value); olvidarAyuda(); render(); }; // [ORIENTADOR] olvidarAyuda
+  $("sel-nivel").onchange = () => { if (S) { S.nivel = Number($("sel-nivel").value); olvidarAyuda(); render(); } }; // [ORIENTADOR] olvidarAyuda
   $("btn-nueva").onclick = nuevaRonda;
   $("btn-volver-jugar").onclick = nuevaRonda;
   $("btn-ayuda").onclick = pedirAyuda; // [ORIENTADOR] ayuda a pedido
@@ -772,8 +772,8 @@ function init() {
     }
   };
   $("btn-voz").onclick = reconocerVoz;
+  $("btn-start").onclick = () => { $("inicio-overlay").classList.add("hidden"); nuevaRonda(); };
   api("/salud").then((s) => { API_OK = !!s.ok; }).catch(() => { API_OK = false; });
-  nuevaRonda();
 }
 
 let reconocedor = null;
