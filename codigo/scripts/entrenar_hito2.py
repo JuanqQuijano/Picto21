@@ -11,6 +11,8 @@ import random
 import sys
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "ia_models"))
+
 from catalogo import cargar_catalogo, cargar_escenarios
 from consejero import ConsejeroAleatorio, ConsejeroHeuristico, ConsejeroTabular
 from experimento_a import imprimir_metricas, simular

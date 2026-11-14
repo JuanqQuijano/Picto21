@@ -10,7 +10,8 @@ import json
 from pathlib import Path
 
 AQUI = Path(__file__).resolve().parent
-DATOS = AQUI.parents[1] / "datos"
+DATOS = AQUI.parents[1] / "datos"  # raiz del repo
+SALIDA = AQUI.parents[0] / "frontend" / "datos.js"
 
 catalogo = json.loads((DATOS / "catalogo.json").read_text(encoding="utf-8"))
 escenarios = json.loads((DATOS / "escenarios.json").read_text(encoding="utf-8"))
@@ -20,6 +21,6 @@ contenido = (
     f"const CATALOGO = {json.dumps(catalogo, ensure_ascii=False, indent=1)};\n"
     f"const ESCENARIOS = {json.dumps(escenarios, ensure_ascii=False, indent=1)};\n"
 )
-(AQUI / "datos.js").write_text(contenido, encoding="utf-8")
+SALIDA.write_text(contenido, encoding="utf-8")
 print(f"datos.js generado con {len(catalogo['cartas'])} cartas y "
       f"{len(escenarios['escenarios'])} escenarios.")

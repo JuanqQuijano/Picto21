@@ -16,6 +16,9 @@ decisiones de pedir/parar/mejora siguen la politica tabular del Hito 2 (datos/po
 from __future__ import annotations
 
 import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "ia_models"))
 
 from catalogo import cargar_catalogo
 from orientador import CLASES, RUTA_METRICAS, RUTA_MODELO, Orientador
