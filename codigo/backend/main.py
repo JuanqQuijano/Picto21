@@ -167,4 +167,7 @@ def orientar(body: OrientarIn):
     return respuesta.a_dict()
 
 
+ASSETS = ROOT.parent / "assets"
+if ASSETS.exists():
+    app.mount("/assets", StaticFiles(directory=str(ASSETS)), name="assets")
 app.mount("/", StaticFiles(directory=str(FRONTEND), html=True), name="ui")
