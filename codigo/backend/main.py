@@ -17,6 +17,7 @@ sys.path.insert(0, str(ROOT / "ia_models"))
 from catalogo import cargar_catalogo, cargar_escenarios  # noqa: E402
 from consejero import ConsejeroHeuristico, ConsejeroTabular  # noqa: E402
 from juego import PEDIR, PLANTARSE, USAR_MEJORA, EstadoJuego, Fase  # noqa: E402
+from orientador import Orientador, SolicitudAyuda  # noqa: E402
 from validador import ValidadorSemantico  # noqa: E402
 
 RUTA_POLITICA = ROOT.parent / "datos" / "politica_q.json"
@@ -32,6 +33,8 @@ try:
 except FileNotFoundError:
     consejero_q = None
     consejero_vi = None
+
+orientador = Orientador(catalogo)
 
 app = FastAPI(title="Picto21 Hito 2", version="2.0")
 app.add_middleware(
@@ -56,12 +59,27 @@ class SugerirIn(BaseModel):
     origen: str = Field("q", description="q | vi | heuristico")
 
 
+class OrientarIn(BaseModel):
+    fase: str = Field("decidir", description="reconocer | decidir")
+    suma: int = 0
+    visible: int = 3
+    mejora: Optional[str] = None
+    mejora_activa: Optional[str] = None
+    puede_pedir: bool = True
+    intentos: int = 0
+    nivel: int = 2
+    carta_id: Optional[str] = None
+    candidatos: list[str] = Field(default_factory=list)
+    pistas_usadas: list[str] = Field(default_factory=list)
+
+
 @app.get("/api/salud")
 def salud():
     return {
         "ok": True,
         "hito": 2,
         "politica": consejero_q is not None,
+        "orientador": orientador.red is not None,
         "cartas": len(catalogo.cartas),
     }
 
@@ -117,6 +135,36 @@ def _carta_con_valor(visible: int) -> str:
         if c.valor == visible:
             return c.id
     return next(iter(catalogo.cartas))
+
+
+@app.post("/api/orientar")
+def orientar(body: OrientarIn):
+    fase = (body.fase or "").strip().lower()
+    if fase not in ("reconocer", "decidir"):
+        raise HTTPException(422, "fase debe ser 'reconocer' o 'decidir'")
+    if fase == "reconocer" and not body.carta_id:
+        raise HTTPException(422, "falta carta_id para la fase reconocer")
+    if body.carta_id and body.carta_id not in catalogo.cartas:
+        raise HTTPException(404, "carta desconocida")
+    respuesta = orientador.sugerir(SolicitudAyuda(
+        fase=fase,
+        suma=body.suma,
+        visible=body.visible,
+        mejora=body.mejora,
+        mejora_activa=body.mejora_activa,
+        puede_pedir=body.puede_pedir,
+        intentos=body.intentos,
+        nivel=body.nivel,
+        carta_id=body.carta_id,
+        candidatos=list(body.candidatos),
+        pistas_usadas=list(body.pistas_usadas),
+    ))
+    if respuesta is None:
+        return {
+            "accion": None, "texto": "", "razon": "", "pictos": "", "pista": None,
+            "confianza": 0.0, "origen": "sin_ayuda", "prediccion": "",
+        }
+    return respuesta.a_dict()
 
 
 app.mount("/", StaticFiles(directory=str(FRONTEND), html=True), name="ui")

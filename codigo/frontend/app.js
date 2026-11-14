@@ -2,7 +2,10 @@
 // Replica en el navegador las reglas de ia_models/juego.py, las pistas ID3 de
 // ia_models/id3_pistas.py y el consejero heuristico de ia_models/consejero.py.
 
-const MAX_INTENTOS = 3;
+// [ORIENTADOR] sin tope de intentos en el juego; ia_models/juego.py conserva su
+// MAX_INTENTOS = 3 para no alterar las metricas del experimento A.
+// La ayuda se entrega solo cuando el jugador la pide
+const AYUDA_AUTOMATICA = false;
 const CARTAS = Object.fromEntries(CATALOGO.cartas.map((c) => [c.id, c]));
 const ESC = Object.fromEntries(ESCENARIOS.escenarios.map((e) => [e.id, e]));
 const MEJORAS = ESCENARIOS.mejoras;
@@ -129,6 +132,23 @@ function mejorPista(objetivo, candidatos, usadas) {
   return { atributo: a, ganancia: g, ...p };
 }
 
+// [ORIENTADOR] agotada la ganancia ID3 siguen los atributos descriptivos que faltan,
+// para que el boton de pista nunca se quede sin nada nuevo que ofrecer
+function pistaRestante(objetivo, usadas) {
+  const attrs = CATALOGO.atributos.concat(["primera_letra", "num_letras"]);
+  const a = attrs.find((x) => !usadas.includes(x) && valorAtributo(objetivo, x) != null);
+  if (!a) return null;
+  const v = String(valorAtributo(objetivo, a));
+  let p = CATALOGO.pictos_pista[v] || { texto: v, emoji: "", arasaac_id: null };
+  if (a === "primera_letra") p = { texto: `empieza con ${v}`, emoji: `🔤${v}`, arasaac_id: null };
+  if (a === "num_letras") p = { texto: `${v} letras`, emoji: `🔢${v}`, arasaac_id: null };
+  return { atributo: a, ganancia: 0, ...p };
+}
+
+function elegirPista(objetivo, candidatos, usadas) {
+  return mejorPista(objetivo, candidatos, usadas) || pistaRestante(objetivo, usadas);
+}
+
 // ------------------------------------------------------------------ consejero
 
 function valorConMejora(base, m) {
@@ -172,6 +192,158 @@ function palabraQueHabriaSalvado(carta, dicha, sumaAntes, mejora, sirve) {
   return mejor;
 }
 
+// ------------------------------------------------------------------ orientador
+
+// [ORIENTADOR] reinicia la ayuda mostrada al cambiar de turno o de estado
+function olvidarAyuda() {
+  if (!S) return;
+  S.ayudaPedida = false;
+  S.ayudaAccion = null;
+}
+
+// [ORIENTADOR] misma heuristica de silabacion que ia_models/orientador.py
+const VOCALES = "aeiouáéíóúü";
+const FUERTES = "aeoáéó";
+const DEBILES = "iu";
+const DESFONEMAS = ["ch", "ll", "rr"];
+const ATAQUES = ["bl", "br", "cl", "cr", "ch", "dr", "fl", "fr", "gl", "gr", "ll", "pl", "pr", "rr", "tr"];
+
+function silabaInicial(palabra) {
+  const w = (palabra || "").trim().toLowerCase();
+  if (!w) return "";
+  const vocal = (c) => VOCALES.includes(c);
+  let i = 0;
+  while (i < w.length && !vocal(w[i])) i++;
+  if (i === w.length) return w.toUpperCase();
+  const diptongo = (a, b) =>
+    (FUERTES.includes(a) && DEBILES.includes(b)) ||
+    (DEBILES.includes(a) && FUERTES.includes(b)) ||
+    (DEBILES.includes(a) && DEBILES.includes(b));
+  let fin = i + 1;
+  while (fin < w.length && diptongo(w[fin - 1], w[fin])) fin++;
+  let j = fin;
+  while (j < w.length && !vocal(w[j])) j++;
+  const grupo = w.slice(fin, j);
+  if (j === w.length) fin = w.length;
+  else if (grupo.length >= 2 && !DESFONEMAS.includes(grupo.slice(0, 2)) && !ATAQUES.includes(grupo.slice(0, 2))) fin += 1;
+  return w.slice(0, fin).toUpperCase();
+}
+
+function pictoSilaba(palabra) {
+  const sil = silabaInicial(palabra);
+  if (!sil) return null;
+  return { atributo: "silaba_inicial", texto: `sílaba ${sil}`, emoji: `🔤${sil}`, arasaac_id: null };
+}
+
+// [ORIENTADOR] toda pista se enuncia junto con la silaba inicial de la palabra
+function textoPista(p, carta) {
+  const sil = pictoSilaba(carta.palabra);
+  return sil ? `Pista: ${p.texto}, ${sil.texto}.` : `Pista: ${p.texto}.`;
+}
+
+// [ORIENTADOR] cuando no quedan atributos, la ayuda repasa los ya mostrados
+function repasoTexto(pistas, carta) {
+  const dadas = pistas.filter((x) => x.atributo !== "silaba_inicial").map((x) => x.texto);
+  const sil = pictoSilaba(carta.palabra);
+  return `Repasa: ${dadas.concat(sil ? [sil.texto] : []).join(", ")}.`;
+}
+
+function cuerpoAyuda() {
+  const reconocer = S.fase === "reconocer";
+  return {
+    fase: S.fase,
+    suma: S.suma,
+    visible: valor(CARTAS[S.crupier.visible].palabra),
+    mejora: S.mejora,
+    mejora_activa: S.mejoraActiva,
+    puede_pedir: S.fase === "decidir" && S.mazo.length > 0,
+    intentos: S.intentos,
+    nivel: S.nivel,
+    carta_id: reconocer ? S.carta?.id ?? null : null,
+    candidatos: S.candidatos.map((c) => c.id),
+    pistas_usadas: reconocer ? S.pistas.map((p) => p.atributo) : [],
+  };
+}
+
+// [ORIENTADOR] estado que identifica la peticion, para descartar respuestas que llegan tarde
+const estadoAyuda = () => `${S.fase}|${S.carta?.id ?? ""}|${S.intentos}|${S.suma}|${S.mazo.length}`;
+
+// [ORIENTADOR] la ayuda se puede pedir todas las veces que se quiera en cada turno
+async function pedirAyuda() {
+  if (!S || S.fase === "fin" || S.ayudaPendiente) return;
+  S.ayudaPendiente = true;
+  const btn = $("btn-ayuda");
+  if (btn) btn.disabled = true;
+  const token = estadoAyuda();
+  let r = null;
+  if (API_OK) {
+    try {
+      r = await api("/orientar", cuerpoAyuda());
+    } catch {
+      r = null; // se responde con la logica local
+    }
+  }
+  S.ayudaPendiente = false;
+  if (!S || S.fase === "fin" || token !== estadoAyuda()) {
+    if (S) render();
+    return;
+  }
+  const ayuda = r?.accion ? r : ayudaLocal();
+  if (ayuda?.accion) aplicarAyuda(ayuda); else render();
+}
+
+// [ORIENTADOR] si la API no esta disponible se usa la misma logica en el navegador
+function ayudaLocal() {
+  if (S.fase === "decidir") {
+    const sug = sugerirLocal();
+    return sug ? { accion: sug[0], razon: sug[1], texto: sug[1] } : null;
+  }
+  if (S.fase === "reconocer" && S.carta) {
+    // [ORIENTADOR] las pistas semanticas no cuentan la silaba, igual que en el backend
+    const semanticas = S.pistas.filter((x) => x.atributo !== "silaba_inicial");
+    const p = elegirPista(S.carta, S.candidatos, semanticas.map((x) => x.atributo));
+    if (p) {
+      const silaba = pictoSilaba(S.carta.palabra);
+      return { accion: "pista", razon: p.texto, texto: textoPista(p, S.carta), pista: p, silaba };
+    }
+    if (S.intentos >= 2 && semanticas.length >= 2) {
+      return {
+        accion: "revelar",
+        razon: "Ya viste todas las pistas.",
+        texto: `La palabra es ${S.carta.palabra.toUpperCase()}.`,
+      };
+    }
+    // [ORIENTADOR] sin atributos nuevos la ayuda no se agota: se repasan los ya dados
+    if (semanticas.length) {
+      const repaso = repasoTexto(S.pistas, S.carta);
+      return { accion: "animo", razon: repaso, texto: repaso };
+    }
+    return {
+      accion: "animo",
+      razon: "Repasa las pistas que ya tienes. Tú puedes.",
+      texto: "Repasa las pistas que ya tienes. Tú puedes.",
+    };
+  }
+  return null;
+}
+
+function aplicarAyuda(r) {
+  if (!r?.accion || !S || S.fase === "fin") return;
+  // [ORIENTADOR] S.ayudaPedida solo controla que el consejo siga visible; no bloquea la proxima peticion
+  S.ayudaPedida = true;
+  S.ayudaAccion = ["pedir", "parar", "mejora"].includes(r.accion) ? r.accion : null;
+  if (r.accion === "pista") {
+    // [ORIENTADOR] la pista se muestra con su pictograma y con la silaba inicial
+    [r.pista, r.silaba].forEach((x) => {
+      if (x && !S.pistas.some((p) => p.atributo === x.atributo)) S.pistas.push(x);
+    });
+  }
+  $("consejo").textContent = r.texto || r.razon || "";
+  render();
+  if (r.texto) decir(r.texto);
+}
+
+
 // ------------------------------------------------------------------ reglas
 
 function nuevaRonda() {
@@ -187,7 +359,7 @@ function nuevaRonda() {
     mejora: esc.mejoras_disponibles.length ? esc.mejoras_disponibles[Math.floor(Math.random() * esc.mejoras_disponibles.length)] : null,
     mejoraActiva: null, carta: null, intentos: 0, pistas: [], nivel: Number($("sel-nivel").value),
     candidatos: [...new Set(esc.mazo)].map((id) => CARTAS[id]),
-    opciones: [], erradas: [],
+    opciones: [], erradas: [], ayudaPedida: false, ayudaAccion: null, ayudaPendiente: false, // [ORIENTADOR]
   };
   mensaje("", "");
   render();
@@ -199,6 +371,7 @@ function sacarCarta() {
   S.intentos = 0;
   S.pistas = [];
   S.fase = "reconocer";
+  olvidarAyuda(); // [ORIENTADOR]
   const distractor = barajar(S.candidatos.filter((c) => c.id !== S.carta.id))[0];
   S.opciones = barajar([S.carta, distractor].filter(Boolean));
   S.erradas = [];
@@ -217,6 +390,7 @@ async function validarRemoto(texto, cartaId) {
 
 async function responder(texto) {
   if (S.fase !== "reconocer") return;
+  olvidarAyuda(); // [ORIENTADOR] el consejo anterior deja de aplicarse al cambiar de intento
   const carta = S.carta;
   let coincide = palabrasValidas(carta).map(normalizar).find((p) => p === normalizar(texto));
   if (!coincide && S.nivel >= 2) {
@@ -226,25 +400,26 @@ async function responder(texto) {
   if (coincide) {
     aceptarPalabra(coincide);
   } else {
+    // [ORIENTADOR] sin tope de intentos: se puede seguir intentandolo todo lo que se quiera
     S.intentos++;
-    if (S.intentos >= MAX_INTENTOS) {
-      mensaje(`Es ${carta.palabra.toUpperCase()}`, "mal");
-      decir(`Es ${carta.palabra}. ¡Sigamos!`);
-      agregarCarta(carta.palabra);
-    } else {
-      S.erradas = S.erradas || [];
-      const clickeada = S.opciones?.find((c) => palabrasValidas(c).some((p) => normalizar(p) === normalizar(texto)));
-      if (clickeada && !S.erradas.includes(clickeada.id)) S.erradas.push(clickeada.id);
-      const p = mejorPista(carta, S.candidatos, S.pistas.map((x) => x.atributo));
-      if (p) S.pistas.push(p);
-      mensaje("Intenta otra vez", "mal");
-      decir(`Intenta otra vez. Pista: ${S.pistas.map((x) => x.texto).join(", ")}`);
-    }
+    S.erradas = S.erradas || [];
+    const clickeada = S.opciones?.find((c) => palabrasValidas(c).some((p) => normalizar(p) === normalizar(texto)));
+    if (clickeada && !S.erradas.includes(clickeada.id)) S.erradas.push(clickeada.id);
+    // [ORIENTADOR] la escalera de pistas es la misma que usa el boton de ayuda
+    const nueva = elegirPista(carta, S.candidatos, S.pistas.map((x) => x.atributo));
+    if (nueva) S.pistas.push(nueva);
+    // [ORIENTADOR] la silaba inicial acompana siempre a la pista
+    const sil = pictoSilaba(carta.palabra);
+    if (sil && !S.pistas.some((x) => x.atributo === sil.atributo)) S.pistas.push(sil);
+    mensaje("Intenta otra vez", "mal");
+    // [ORIENTADOR] se dicta la pista nueva o, si ya estan todas, el repaso
+    decir(`Intenta otra vez. ${nueva ? textoPista(nueva, carta) : repasoTexto(S.pistas, carta)}`);
   }
   render();
 }
 
 function aceptarPalabra(palabra) {
+  olvidarAyuda(); // [ORIENTADOR]
   agregarCarta(palabra);
   if (S.fase !== "fin") {
     mensaje(`¡Muy bien! ${palabra.toUpperCase()} vale ${valor(palabra)}`, "bien");
@@ -384,7 +559,8 @@ function render() {
   if (tituloEleccion) tituloEleccion.hidden = true;
   const intentos = $("intentos");
   intentos.hidden = !reconocer;
-  intentos.textContent = reconocer ? `Intento ${Math.min(S.intentos + 1, MAX_INTENTOS)} de ${MAX_INTENTOS}` : "";
+  // [ORIENTADOR] sin tope de intentos: se muestra el numero, no "de 3"
+  intentos.textContent = reconocer ? `Intento ${S.intentos + 1}` : "";
   const btnVoz = $("btn-voz");
   if (btnVoz) btnVoz.hidden = !(reconocer && S.nivel >= 2);
   const img = $("carta-img"), em = $("carta-emoji");
@@ -413,11 +589,27 @@ function render() {
   $("mejora-emoji").textContent = m ? MEJORAS[m].emoji : "—";
   $("mejora-texto").textContent = S.mejoraActiva ? `${MEJORAS[m].texto} ACTIVA` : m ? MEJORAS[m].texto : "SIN MEJORA";
 
+  // [ORIENTADOR] sin ayuda automatica: solo se marca lo que el jugador pidio
   document.querySelectorAll(".btn-accion").forEach((b) => b.classList.remove("sugerida"));
-  const sug = sugerirLocal();
-  if (sug) aplicarConsejo(sug[0], sug[1]);
-  else $("consejo").textContent = "";
-  if (decidir) refrescarConsejoRemoto();
+  if (S.ayudaPedida) {
+    const btn = S.ayudaAccion ? $(`btn-${S.ayudaAccion}`) : null;
+    if (btn) btn.classList.add("sugerida");
+  } else {
+    $("consejo").textContent = "";
+  }
+  const btnAyuda = $("btn-ayuda");
+  if (btnAyuda) {
+    // [ORIENTADOR] sin limite de ayudas: solo se desactiva mientras llega la respuesta
+    btnAyuda.disabled = S.fase === "fin" || !!S.ayudaPendiente;
+    $("ayuda-texto").textContent = S.ayudaPendiente
+      ? "…"
+      : S.fase === "reconocer" ? "PISTA" : S.fase === "decidir" ? "CONSEJO" : "AYÚDAME";
+  }
+  if (AYUDA_AUTOMATICA) {
+    const sug = sugerirLocal();
+    if (sug) aplicarConsejo(sug[0], sug[1]);
+    if (decidir) refrescarConsejoRemoto();
+  }
 }
 
 function aplicarConsejo(accion, razon) {
@@ -557,14 +749,16 @@ function init() {
   ESCENARIOS.escenarios.forEach((e) => sel.add(new Option(e.nombre, e.id)));
   sel.onchange = () => { $("sel-nivel").value = ESC[sel.value].nivel_inicial; nuevaRonda(); };
   $("sel-nivel").value = ESC[sel.value].nivel_inicial;
-  $("sel-nivel").onchange = () => { S.nivel = Number($("sel-nivel").value); render(); };
+  $("sel-nivel").onchange = () => { S.nivel = Number($("sel-nivel").value); olvidarAyuda(); render(); }; // [ORIENTADOR] olvidarAyuda
   $("btn-nueva").onclick = nuevaRonda;
   $("btn-volver-jugar").onclick = nuevaRonda;
+  $("btn-ayuda").onclick = pedirAyuda; // [ORIENTADOR] ayuda a pedido
   $("btn-pedir").onclick = () => { if (S.fase === "decidir" && S.mazo.length) sacarCarta(); };
-  $("btn-parar").onclick = () => { if (S.fase === "decidir") { mensaje("", ""); jugarCrupier(); render(); } };
+  $("btn-parar").onclick = () => { if (S.fase === "decidir") { mensaje("", ""); jugarCrupier(); olvidarAyuda(); render(); } }; // [ORIENTADOR] olvidarAyuda
   $("btn-mejora").onclick = () => {
     if (S.fase !== "decidir" || !S.mejora) return;
     S.mejoraActiva = S.mejora; S.mejora = null;
+    olvidarAyuda(); // [ORIENTADOR]
     decir(MEJORAS[S.mejoraActiva].descripcion);
     render();
   };

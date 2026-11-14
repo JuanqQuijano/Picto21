@@ -910,6 +910,46 @@ main {
 
 .consejo:empty { display: none; }
 
+.btn-ayuda {
+  width: 100%;
+  min-height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  border: 2px solid #8a6a00;
+  border-radius: var(--r-lg);
+  background: linear-gradient(180deg, #ffe38a, #f5c542);
+  box-shadow: 0 5px 0 #c99a12;
+  color: #3d2c00;
+  font-family: var(--font-title);
+  font-size: 1.4rem;
+  font-weight: 700;
+}
+
+.btn-ayuda:hover:not(:disabled) {
+  transform: translateY(-2px);
+  filter: brightness(1.04);
+}
+
+.btn-ayuda:active:not(:disabled) {
+  transform: translateY(2px);
+  box-shadow: none;
+}
+
+.btn-ayuda:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.btn-ayuda:focus-visible {
+  outline: 4px solid var(--azul);
+  outline-offset: 3px;
+}
+
+.mesa.modo-reconocer .consejo:not(:empty) { display: block; }
+
 /* Overlay */
 .fin-overlay {
   position: fixed;

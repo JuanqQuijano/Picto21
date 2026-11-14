@@ -1,4 +1,5 @@
 # Hito 1: la consola solo usa la biblioteca estandar.
-# Hito 2: API y consejero aprendido.
+# Hito 2: API, consejero aprendido y orientador neuronal.
 fastapi
 uvicorn
+numpy

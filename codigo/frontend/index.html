@@ -89,6 +89,11 @@
 
       <div class="zona-acciones">
         <div id="mensaje" class="mensaje" aria-live="assertive"></div>
+        <button id="btn-ayuda" class="btn-ayuda" type="button" aria-label="Pedir ayuda al orientador">
+          <span aria-hidden="true">💡</span>
+          <span id="ayuda-texto">AYÚDAME</span>
+        </button>
+        <div id="consejo" class="consejo" aria-live="polite"></div>
         <section class="acciones">
           <button id="btn-pedir" class="btn-accion pedir">
             <img src="https://static.arasaac.org/pictograms/5441/5441_500.png" alt="">
@@ -103,7 +108,6 @@
             <span id="mejora-texto">MEJORA</span>
           </button>
         </section>
-        <div id="consejo" class="consejo" aria-live="polite"></div>
       </div>
     </section>
   </main>
@@ -127,6 +131,6 @@
   </footer>
 
   <script src="datos.js"></script>
-  <script src="app.js?v=hito2-voz"></script>
+  <script src="app.js?v=hito2-orientador"></script>
 </body>
 </html>
