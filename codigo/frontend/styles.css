@@ -1242,9 +1242,11 @@ footer a { color: var(--coral-oscuro); font-weight: 700; }
   position: relative;
   min-height: 420px;
   background:
-    repeating-linear-gradient(0deg, rgba(255,255,255,0.05) 0 2px, transparent 2px 16px),
-    repeating-linear-gradient(90deg, rgba(255,255,255,0.05) 0 2px, transparent 2px 16px),
-    linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+    linear-gradient(180deg, rgba(15,23,42,0.25), rgba(15,23,42,0.55)),
+    url("../../assets/img/fondo_inicio.png");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
   padding: 24px;
   display: grid;
   place-items: center;
@@ -1291,6 +1293,12 @@ footer a { color: var(--coral-oscuro); font-weight: 700; }
   text-shadow: 4px 4px 0 #6366f1, 8px 8px 0 #000;
   letter-spacing: 2px;
   line-height: 1.4;
+}
+.inicio-logo-img {
+  max-width: min(420px, 70vw);
+  height: auto;
+  image-rendering: pixelated;
+  filter: drop-shadow(0 6px 0 #000);
 }
 
 .inicio-sub {
