@@ -1211,14 +1211,19 @@ footer a { color: var(--coral-oscuro); font-weight: 700; }
   z-index: 100;
   display: grid;
   place-items: center;
-  background: radial-gradient(circle at 50% 30%, #1e3a8a 0%, #0f172a 70%);
+  background:
+    linear-gradient(180deg, rgba(15,23,42,0.35), rgba(15,23,42,0.65)),
+    url("../../assets/img/fondo_inicio.png");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
   padding: 12px;
 }
 .inicio-overlay.hidden { display: none; }
 
 .inicio-ventana {
   width: min(920px, 96vw);
-  background: #0f172a;
+  background: rgba(15, 23, 42, 0.72);
   border: 6px solid #fbbf24;
   box-shadow: 0 0 0 4px #000, 0 16px 0 #000, 0 0 60px rgba(99,102,241,0.5);
   border-radius: 8px;
@@ -1241,12 +1246,7 @@ footer a { color: var(--coral-oscuro); font-weight: 700; }
 .inicio-escenario {
   position: relative;
   min-height: 420px;
-  background:
-    linear-gradient(180deg, rgba(15,23,42,0.25), rgba(15,23,42,0.55)),
-    url("../../assets/img/fondo_inicio.png");
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
+  background: transparent;
   padding: 24px;
   display: grid;
   place-items: center;
